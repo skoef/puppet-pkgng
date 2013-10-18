@@ -28,6 +28,11 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
         pkg_info = package.split('-')
         version = pkg_info.pop
         name = pkg_info.join('-')
+        debug package.inspect
+        debug origin.inspect
+        debug pkg_info.inspect
+        debug version.inspect
+        debug name.inspect
         pkg = {
           :ensure   => :present,
           :name     => name,
