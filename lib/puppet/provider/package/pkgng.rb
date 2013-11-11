@@ -9,6 +9,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   defaultfor :operatingsystem => :freebsd if $pkgng_enabled
 
   has_feature :versionable
+  has_feature :upgradeable
 
   def self.get_info
     pkg(['info','-ao'])
@@ -87,6 +88,10 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   def origin
     debug @property_hash[:origin]
     @property_hash[:origin]
+  end
+
+  def update
+
   end
 
 end
