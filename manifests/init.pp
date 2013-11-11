@@ -13,7 +13,6 @@ class pkgng (
   $portsdir     = $pkgng::params::portsdir,
 ) inherits pkgng::params {
 
-  # At the time of this writing, only FreeBSD 9 and 10 are supported by pkgng
   if $pkgng_supported {
     file { "/usr/local/etc/pkg.conf":
       content  => "PACKAGESITE: ${packagesite}",
@@ -30,7 +29,7 @@ class pkgng (
       require => File['/etc/make.conf'],
     }
 
-    # Triggered on config changes
+    # read the repo on config changes
     exec { "pkg update":
       path        => '/usr/local/sbin',
       refreshonly => true,
@@ -49,6 +48,6 @@ class pkgng (
       command     => "pkg2ng",
     }
   } else {
-    notice("pkgng is not supported on this release")
+    notice("PkgNG is not supported on this release of ${operatingsystem}.")
   }
 }
