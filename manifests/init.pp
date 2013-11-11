@@ -29,6 +29,20 @@ class pkgng (
       require => File['/etc/make.conf'],
     }
 
+    file { "/usr/local/etc/pkg":
+      ensure => directory,
+      owner  => root,
+      group  => 0,
+      mode   => 0755,
+    }
+
+    file { "/usr/local/etc/pkg/repos":
+      ensure => directory,
+      owner  => root,
+      group  => 0,
+      mode   => 0755,
+    }
+
     # read the repo on config changes
     exec { "pkg update":
       path        => '/usr/local/sbin',
