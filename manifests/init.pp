@@ -26,30 +26,29 @@ class pkgng (
     notify  => Exec['pkg update'],
   }
 
+  file { '/etc/pkg':
+    ensure  => 'directory',
+  }
+
   # make sure repo config dir is present
   file { '/usr/local/etc/pkg':
     ensure => directory,
-  }
-
-  if $purge_repos_d == true {
-    File['/usr/local/etc/pkg/repos'] {
-      recurse => true,
-      purge   => true,
-    }
   }
 
   file { '/usr/local/etc/pkg/repos':
     ensure => directory,
   }
 
-  file { '/etc/make.conf':
-    ensure => present,
-  }
+  if $purge_repos_d == true {
+    File['/etc/pkg'] {
+      recurse => true,
+      purge   => true,
+    }
 
-  file_line { 'WITH_PKGNG':
-    path    => '/etc/make.conf',
-    line    => "WITH_PKGNG=yes\n",
-    require => File['/etc/make.conf'],
+    File['/usr/local/etc/pkg/repos'] {
+      recurse => true,
+      purge   => true,
+    }
   }
 
   # Triggered on config changes

@@ -4,12 +4,12 @@
 # better.
 
 define pkgng::repo (
-    $packagehost = $name,
-    $release     = $::operatingsystemrelease,
-    $protocol    = 'http',
-    $mirror_type = 'srv',
-    $repopath    = '/${ABI}/latest',
-    $enabled     = true,
+  $packagehost = $name,
+  $release     = $::operatingsystemrelease,
+  $protocol    = 'http',
+  $mirror_type = 'srv',
+  $repopath    = '/${ABI}/latest',
+  $enabled     = true,
 ) {
   include ::pkgng
 
@@ -32,7 +32,7 @@ define pkgng::repo (
 
   # define repository configuration
   file { "/usr/local/etc/pkg/repos/${name}.conf":
-    content => template("${module_name}/repo.erb"),
+    content => template('pkgng/repo.erb'),
     notify  => Exec['pkg update'],
   }
 }
