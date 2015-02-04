@@ -35,4 +35,28 @@ define pkgng::repo (
     content => template('pkgng/repo.erb'),
     notify  => Exec['pkg update'],
   }
+
+  # set firewall
+  $manage_firewall_host = $mirror_type ? {
+    /(?i:srv)/ => firewall_resolve_srv_targets("_http._tcp.${packagehost}"),
+    default    => $packagehost,
+  }
+
+  # TODO: ftp protocol also needs additional ports (either passive or active)
+  $manage_firewall_port = $protocol ? {
+    'http'  => 80,
+    'https' => 443,
+    'ftp'   => 21,
+    'ssh'   => 22,
+    default => undef,
+  }
+
+  if $manage_firewall_port {
+    firewall::rule { "pkgng-repo-${name}":
+      direction   => 'out',
+      protocol    => 'tcp',
+      port        => $manage_firewall_port,
+      destination => $manage_firewall_host
+    }
+  }
 }
