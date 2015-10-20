@@ -73,6 +73,18 @@ describe provider_class do
   end
 
   context "#install" do
+    it "should call pkg with the specified package version given an origin for package name" do
+      resource = Puppet::Type.type(:package).new(
+        :name     => 'ftp/curl',
+        :provider => :pkgng,
+        :ensure   => '7.33.1'
+      )
+      resource.provider.should_receive(:pkg) do |arg|
+        arg.should include('curl-7.33.1')
+      end
+      resource.provider.install
+    end
+
     it "should call pkg with the specified package version" do
       resource = Puppet::Type.type(:package).new(
         :name     => 'curl',
@@ -145,6 +157,14 @@ describe provider_class do
     it "should rereturn nil when the current package is the latest" do
       nmap_latest_version = provider_class.get_latest_version('security/nmap')
       nmap_latest_version.should be_nil
+    end
+
+    it "should match the package name exactly" do
+      bash_comp_latest_version = provider_class.get_latest_version('shells/bash-completion')
+      bash_comp_latest_version.should == "2.1_3"
+
+      bash_latest_version = provider_class.get_latest_version('shells/bash')
+      bash_latest_version.should be_nil
     end
   end
 end

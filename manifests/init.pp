@@ -2,14 +2,19 @@
 # support for managing packages with Puppet.  This will eventually be in
 # mainline FreeBSD, but for now, we are leaving the installation up to the
 # adminstrator, since there is no going back.
+#
+# If you have purge_repos_d as true - then you'll have no repositories
+# defined unless you define one. You want to do this as you'll want this
+# module to control repos anyway.
+#
 # To install PkgNG, one can simply run the following:
 # make -C /usr/ports/ports-mgmg/pkg install clean
-
 class pkgng (
   $pkg_dbdir     = $pkgng::params::pkg_dbdir,
   $pkg_cachedir  = $pkgng::params::pkg_cachedir,
   $portsdir      = $pkgng::params::portsdir,
-  $purge_repos_d = false,
+  $options       = [],
+  $purge_repos_d = true,
   $repos         = {},
 ) inherits pkgng::params {
 
@@ -18,36 +23,35 @@ class pkgng (
     fail('PKGng is either not supported on your system or it is too old')
   }
 
-  # Validate $purge_repos_d boolean
+  # Validate parameters
+  validate_absolute_path($pkg_dbdir)
+  validate_absolute_path($pkg_cachedir)
+  validate_absolute_path($portsdir)
+  validate_array($options)
   validate_bool($purge_repos_d)
+  validate_hash($repos)
 
   file { '/usr/local/etc/pkg.conf':
-    content => "PKG_DBDIR: ${pkg_dbdir}\nPKG_CACHEDIR: ${pkg_cachedir}\nPORTSDIR: ${portsdir}\n",
+    content => template('pkgng/pkg.conf'),
     notify  => Exec['pkg update'],
   }
 
-  file { '/etc/pkg':
-    ensure  => 'directory',
-  }
-
-  # make sure repo config dir is present
-  file { '/usr/local/etc/pkg':
-    ensure => directory,
-  }
-
-  file { '/usr/local/etc/pkg/repos':
+  # manage repo config dirs
+  file { ['/etc/pkg', '/usr/local/etc/pkg', '/usr/local/etc/pkg/repos']:
     ensure => directory,
   }
 
   if $purge_repos_d == true {
-    File['/etc/pkg'] {
-      recurse => true,
-      purge   => true,
-    }
-
     File['/usr/local/etc/pkg/repos'] {
       recurse => true,
       purge   => true,
+      before  => Exec['pkg update'],
+    }
+
+    File { '/etc/pkg':
+      purge   => true,
+      recurse => true,
+      before  => Exec['pkg update']
     }
   }
 
@@ -55,7 +59,7 @@ class pkgng (
   exec { 'pkg update':
     path        => '/usr/local/sbin',
     refreshonly => true,
-    command     => 'pkg -q update -f',
+    command     => 'pkg update -q -f',
   }
 
   # This exec should really on ever be run once, and only upon converting to

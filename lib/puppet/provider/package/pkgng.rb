@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   confine :operatingsystem => [:freebsd, :dragonfly]
   confine :pkgng_enabled => :true
 
-  defaultfor :operatingsystem => :freebsd
+  defaultfor :operatingsystem => [:freebsd, :dragonfly]
   defaultfor :pkgng_enabled => :true
 
 
@@ -26,7 +26,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   end
 
   def self.get_latest_version(origin)
-    if latest_version = self.get_version_list.lines.find { |l| l =~ /^#{origin}/ }
+    if latest_version = self.get_version_list.lines.find { |l| l =~ /^#{origin} / }
       latest_version = latest_version.split(' ').last.split(')').first
       return latest_version
     end
@@ -84,11 +84,19 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     source = resource[:source]
     source = URI(source) unless source.nil?
 
-    # Ensure we handle the version
-    if resource[:ensure] =~ /\./
-      installname = resource[:name] + '-' + resource[:ensure]
+    # If resource[:name] is actually an origin (e.g. 'www/curl' instead of
+    # just 'curl'), drop the category prefix. pkgng doesn't support version
+    # pinning with the origin syntax (pkg install curl-1.2.3 is valid, but
+    # pkg install www/curl-1.2.3 is not).
+    if resource[:name] =~ /\//
+      installname = resource[:name].split('/')[1]
     else
       installname = resource[:name]
+    end
+
+    # Ensure we handle the version
+    if resource[:ensure] =~ /\./
+      installname += '-' + resource[:ensure]
     end
 
     if not source # install using default repo logic
@@ -136,7 +144,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     install
   end
 
-  # Returnthe latest version of the package
+  # Return the latest version of the package
   def latest
     debug "returning the latest #{@property_hash[:name].inspect} version #{@property_hash[:latest].inspect}"
     @property_hash[:latest]
